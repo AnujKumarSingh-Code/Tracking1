@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection (replace with your MongoDB URI)
-mongoose.connect('mongodb+srv://anujkumarsinghmain:67pdfRnUT1vZBmbX@project-next.gxqch.mongodb.net/?retryWrites=true&w=majority&appName=project-next');
+mongoose.connect('mongodb+srv://anujkumarsinghcoder:QgSvKNYjniJWzg0F@project-next.amlt0ce.mongodb.net/?retryWrites=true&w=majority&appName=project-next');
 
 // MongoDB Schema for tracking clicks
 const clickSchema = new mongoose.Schema({
