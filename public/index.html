@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTree Clone</title>
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MV84TKDV');</script>
+    <!-- End Google Tag Manager -->
+</head>
+<body>
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MV84TKDV"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <h1>LinkTree Clone</h1>
+
+    <h2>User's Links:</h2>
+    <ul>
+        <li><a href="https://github.com/AnujKumarSingh-Code" data-page-owner-id="123" class="track-click">Git</a></li>
+        <li><a href="https://leetcode.com/u/Anuj_Kumar_Coder/" data-page-owner-id="123" class="track-click">Leetcode</a></li>
+    </ul>
+
+    <!-- Click Tracking JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('.track-click');
+
+            links.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    const ownerId = this.getAttribute('data-page-owner-id');
+                    const linkUrl = this.getAttribute('href');
+                    
+                    // Send data to the backend (Express server)
+                    fetch('/track-click', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ownerId: ownerId,
+                            linkUrl: linkUrl
+                        })
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
