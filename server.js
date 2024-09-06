@@ -33,6 +33,27 @@ app.post('/track-click', async (req, res) => {
     }
 });
 
+app.get('/:username', async (req, res) => {
+  const user = await User.findOne({ username: req.params.username });
+  if (!user) return res.status(404).send('User not found');
+  
+  // Render the user's page (replace with your actual template engine)
+  res.send(`<html><body>
+    ${user.links.map(link => `<a href="${link.url}" class="track-click" data-url="${link.url}">${link.url}</a><br>`).join('')}
+    <script>
+      document.querySelectorAll('.track-click').forEach(link => {
+        link.addEventListener('click', (event) => {
+          dataLayer.push({
+            event: 'link_click',
+            link_url: event.target.getAttribute('data-url'),
+            username: '${user.username}'
+          });
+        });
+      });
+    </script>
+  </body></html>`);
+});
+
 // Serve the HTML page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
