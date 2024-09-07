@@ -4,14 +4,7 @@ const path = require('path');
 const { google } = require('googleapis');
 require("dotenv").config();
 
-// Google Analytics scopes
-const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
 
-const jwt = new google.auth.JWT({
-  email: process.env.CLIENT_EMAIL,
-  key: Buffer.from(process.env.PRIVATE_KEY, 'base64').toString('utf8'),
-  scopes: scopes
-});
 
 
 // console.log(process.env.PRIVATE_KEY.replace(/\\n/g, "\n") , "AAAAAAAAAAAA")
@@ -33,6 +26,15 @@ const clickSchema = new mongoose.Schema({
 });
 
 const Click = mongoose.model('Click', clickSchema);
+
+// Google Analytics scopes
+const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
+
+const jwt = new google.auth.JWT({
+  email: process.env.CLIENT_EMAIL,
+  key: Buffer.from(process.env.PRIVATE_KEY, 'base64').toString('utf8'),
+  scopes: scopes
+});
 
 // API route to receive link click data and store in MongoDB
 app.post('/track-click', async (req, res) => {
