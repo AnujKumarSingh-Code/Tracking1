@@ -51,9 +51,11 @@ app.post('/track-click', async (req, res) => {
 
 // API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
+
+    const res = "aa";
     try {
         // Authorize the client
-        await jwt.authorize();
+        aa = await jwt.authorize();
 
         // Initialize the GA4 Data API client
         const analyticsData = google.analyticsdata('v1beta');
@@ -83,7 +85,7 @@ app.get('/get-link-stats', async (req, res) => {
         // Send the stats back as JSON
         res.status(200).json(response);
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json(aa);
     }
 });
 
