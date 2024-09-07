@@ -80,7 +80,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
         metrics: [{ name: 'eventCount' }],
-        dimensions: [{ name: 'eventName' }, { name: 'pagePath' }],
+        dimensions: [{ name: 'customEvent:owner_id' }, { name: 'pagePath' }],
         dimensionFilter: {
           filter: {
             fieldName: 'eventName',
@@ -94,7 +94,19 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
       auth: oauth2Client,
     });
 
-    res.status(200).json(response.data);
+    // Process the response to group by owner_id and link_url
+    const data = {};
+    response.data.rows.forEach(row => {
+      const [owner_id, link_url] = row.dimensionValues.map(d => d.value);
+      const eventCount = row.metricValues[0].value;
+
+      if (!data[owner_id]) {
+        data[owner_id] = {};
+      }
+      data[owner_id][link_url] = (data[owner_id][link_url] || 0) + parseInt(eventCount);
+    });
+
+    res.status(200).json(data);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ success: false, message: error.message });
