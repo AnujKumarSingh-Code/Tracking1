@@ -16,6 +16,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// MongoDB schema for storing click data (for future use)
 const clickSchema = new mongoose.Schema({
   ownerId: String,
   linkUrl: String,
@@ -24,6 +25,7 @@ const clickSchema = new mongoose.Schema({
 
 const Click = mongoose.model('Click', clickSchema);
 
+// Route to initiate OAuth2 authentication
 app.get('/auth', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
@@ -32,6 +34,7 @@ app.get('/auth', (req, res) => {
   res.redirect(authUrl);
 });
 
+// Callback route to handle OAuth2 authentication
 app.get('/oauth2callback', async (req, res) => {
   const code = req.query.code;
   
@@ -68,7 +71,7 @@ async function ensureAuthenticated(req, res, next) {
   }
 }
 
-// Example protected route to get Google Analytics data
+// Route to fetch link click stats from Google Analytics
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
@@ -98,6 +101,12 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   }
 });
 
+// Route to serve the frontend
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start the server
 app.listen(4000, () => {
   console.log('Server running on port 4000');
 });
