@@ -1,58 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkTree Clone</title>
 
-   <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-TS8ZQPPN');</script>
-<!-- End Google Tag Manager -->
+    <!-- Google Tag Manager -->
+    <script>
+        (function(w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s),
+                dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-TS8ZQPPN');
+    </script>
+    <!-- End Google Tag Manager -->
 
     <!-- Matomo -->
-<script>
-  var _paq = window._paq = window._paq || [];
-  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-  _paq.push(['trackPageView']);
-  _paq.push(['enableLinkTracking']);
-  (function() {
-    var u="https://onrenderanuj.matomo.cloud/";
-    _paq.push(['setTrackerUrl', u+'matomo.php']);
-    _paq.push(['setSiteId', '1']);
-    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-    g.async=true; g.src='https://cdn.matomo.cloud/onrenderanuj.matomo.cloud/matomo.js'; s.parentNode.insertBefore(g,s);
-  })();
-</script>
-<!-- End Matomo Code -->
+    <script>
+        var _paq = window._paq = window._paq || [];
+        /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function() {
+            var u = "https://onrenderanuj.matomo.cloud/";
+            _paq.push(['setTrackerUrl', u + 'matomo.php']);
+            _paq.push(['setSiteId', '1']);
+            var d = document,
+                g = d.createElement('script'),
+                s = d.getElementsByTagName('script')[0];
+            g.async = true;
+            g.src = 'https://cdn.matomo.cloud/onrenderanuj.matomo.cloud/matomo.js';
+            s.parentNode.insertBefore(g, s);
+        })();
+    </script>
+    <!-- End Matomo Code -->
 
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BPXQTETB5C"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-BPXQTETB5C');
+    </script>
+    <!-- End Google Analytics -->
 </head>
 
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BPXQTETB5C"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-BPXQTETB5C');
-</script>
 <body>
-
     <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TS8ZQPPN"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TS8ZQPPN" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
 
     <h1>LinkTree Clone</h1>
 
     <h2>User's Links:</h2>
     <ul>
-        <li><a href="https://github.com/AnujKumarSingh-Code" data-page-owner-id="123" class="track-click">Git</a></li>
-        <li><a href="https://leetcode.com/u/Anuj_Kumar_Coder/" data-page-owner-id="123" class="track-click">Leetcode</a></li>
+        <li><a href="https://github.com/AnujKumarSingh-Code" data-page-owner-id="123" class="track-click">GitHub</a></li>
+        <li><a href="https://leetcode.com/u/Anuj_Kumar_Coder/" data-page-owner-id="123" class="track-click">LeetCode</a></li>
     </ul>
 
     <!-- Click Tracking JavaScript -->
@@ -64,7 +77,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 link.addEventListener('click', function(event) {
                     const ownerId = this.getAttribute('data-page-owner-id');
                     const linkUrl = this.getAttribute('href');
-                    
+
                     // Send data to the backend (Express server)
                     fetch('/track-click', {
                         method: 'POST',
@@ -81,4 +94,5 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         });
     </script>
 </body>
+
 </html>
