@@ -27,7 +27,7 @@ const clickSchema = new mongoose.Schema({
 
 const Click = mongoose.model('Click', clickSchema);
 
-// Route to start OAuth2 flow
+// Route to initiate OAuth2 flow
 app.get('/auth', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
@@ -43,9 +43,10 @@ app.get('/oauth2callback', async (req, res) => {
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
-
+    
     // Store tokens (you should store them in persistent storage)
     tokenStore = tokens;
+    console.log('Tokens acquired and stored:', tokenStore);
 
     res.send('Authorization successful! You can close this window.');
   } catch (error) {
@@ -62,12 +63,10 @@ async function ensureAuthenticated(req, res, next) {
 
   oauth2Client.setCredentials(tokenStore);
 
+  // Check if the token is expired and refresh it
   try {
-    // Refresh the access token if it is expired
-    if (oauth2Client.isTokenExpiring()) {
-      const { credentials } = await oauth2Client.refreshAccessToken();
-      tokenStore = credentials; // Update tokenStore with refreshed tokens
-    }
+    await oauth2Client.getAccessToken(); // This triggers a token refresh if needed
+    tokenStore = oauth2Client.credentials; // Update tokenStore with refreshed tokens
     next();
   } catch (error) {
     console.error('Error refreshing access token:', error);
@@ -79,8 +78,7 @@ async function ensureAuthenticated(req, res, next) {
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
-
-    const [response] = await analyticsData.properties.runReport({
+    const response = await analyticsData.properties.runReport({
       property: `properties/${process.env.VIEW_ID}`,
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
