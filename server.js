@@ -85,7 +85,7 @@ app.get('/get-link-stats', async (req, res) => {
         // Send the stats back as JSON
         res.status(200).json(response);
     } catch (error) {
-        res.status(500).json({ success: false, message: error});
+        res.status(500).json({ error });
     }
 });
 
