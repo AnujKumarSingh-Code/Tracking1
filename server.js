@@ -11,6 +11,9 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.REDIRECT_URI
 );
 
+// Scopes for Google Analytics
+const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
+
 // Initialize Express app
 const app = express();
 
@@ -19,7 +22,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://anujkumarsinghcoder:QgSvKNYjniJWzg0F@project-anal.amlt0ce.mongodb.net/?retryWrites=true&w=majority&appName=project-anal');
+mongoose.connect('mongodb+srv://anujkumarsinghcoder:QgSvKNYjniJWzg0F@project-anal.amlt0ce.mongodb.net/?retryWrites=true&w=majority&appName=project-anal', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
 
 // MongoDB Schema for tracking clicks
 const clickSchema = new mongoose.Schema({
@@ -42,16 +48,45 @@ app.post('/track-click', async (req, res) => {
     }
 });
 
+// Route to initiate OAuth2 flow
+app.get('/auth', (req, res) => {
+    const authUrl = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+    });
+    res.redirect(authUrl);
+});
+
+// OAuth2 callback route to handle authorization code
+app.get('/oauth2callback', async (req, res) => {
+    const code = req.query.code;
+
+    try {
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
+        
+        // Save the tokens for future use
+        console.log('Tokens:', tokens);
+
+        res.send('Authorization successful! You can close this window.');
+    } catch (error) {
+        console.error('Error getting tokens:', error);
+        res.status(500).send('Error during authentication.');
+    }
+});
+
 // API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
     try {
-        // Authorize the client
+        // Ensure that the OAuth2 client has been authorized
         if (!oauth2Client.credentials.access_token) {
-            return res.status(401).json({ success: false, message: 'No access token available.' });
+            return res.status(401).json({ success: false, message: 'No access token available. Please authorize the application first.' });
         }
 
         // Initialize the GA4 Data API client with the OAuth2 client
-        const [response] = await google.analyticsdata('v1beta').properties.runReport({
+        const analyticsData = google.analyticsdata('v1beta');
+
+        const [response] = await analyticsData.properties.runReport({
             property: `properties/${process.env.VIEW_ID}`,
             requestBody: {
                 dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -71,8 +106,9 @@ app.get('/get-link-stats', async (req, res) => {
         });
 
         // Send the stats back as JSON
-        res.status(200).json(response);
+        res.status(200).json(response.data);
     } catch (error) {
+        console.error('Error fetching link stats:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -80,24 +116,6 @@ app.get('/get-link-stats', async (req, res) => {
 // Serve the HTML page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
-});
-
-// OAuth2 callback route to handle authorization code
-app.get('/oauth2callback', async (req, res) => {
-    const code = req.query.code;
-
-    try {
-        const { tokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
-        
-        // Save the tokens for future use
-        console.log('Tokens:', tokens);
-
-        res.send('Authorization successful! You can close this window.');
-    } catch (error) {
-        console.error('Error getting tokens:', error);
-        res.status(500).send('Error during authentication.');
-    }
 });
 
 // Start the server
