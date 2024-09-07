@@ -4,6 +4,20 @@ const path = require('path');
 const { google } = require('googleapis');
 require("dotenv").config();
 
+// Google Analytics scopes
+const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
+
+// Replace escaped newlines in the private key
+const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
+
+// Google Analytics JWT for authentication
+const jwt = new google.auth.JWT(
+    process.env.CLIENT_EMAIL,
+    null,
+    privateKey,
+    scopes
+);
+
 // Initialize Express app
 const app = express();
 
@@ -11,6 +25,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Connect to MongoDB
 mongoose.connect('mongodb+srv://anujkumarsinghcoder:QgSvKNYjniJWzg0F@project-anal.amlt0ce.mongodb.net/?retryWrites=true&w=majority&appName=project-anal');
 
 // MongoDB Schema for tracking clicks
@@ -21,16 +36,6 @@ const clickSchema = new mongoose.Schema({
 });
 
 const Click = mongoose.model('Click', clickSchema);
-
-// Google Analytics scopes
-const scopes = 'https://www.googleapis.com/auth/analytics.readonly';
-
-const jwt = new google.auth.JWT(
-  process.env.CLIENT_EMAIL,
-  null,
-  process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
-  scopes
-);
 
 // API route to receive link click data and store in MongoDB
 app.post('/track-click', async (req, res) => {
@@ -44,37 +49,41 @@ app.post('/track-click', async (req, res) => {
     }
 });
 
-// API route to get link stats from Google Analytics
+// API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
     try {
         // Authorize the client
         await jwt.authorize();
 
-        // Initialize the Analytics Reporting API
-        const analyticsreporting = google.analyticsreporting({
-            version: 'v4',
-            auth: jwt
-        });
+        // Initialize the GA4 Data API client
+        const analyticsData = google.analyticsdata('v1beta');
 
-        // Define the request parameters
-        const response = await analyticsreporting.reports.batchGet({
+        // GA4 Property ID (replace with your property ID)
+        const propertyId = process.env.VIEW_ID;
+
+        // Define the request parameters for GA4 Data API
+        const [response] = await analyticsData.properties.runReport({
+            property: `properties/${propertyId}`,
             requestBody: {
-                reportRequests: [
-                    {
-                        viewId: process.env.VIEW_ID,  // Replace with your Google Analytics view ID
-                        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-                        metrics: [{ expression: 'ga:totalEvents' }],
-                        dimensions: [{ name: 'ga:eventLabel' }, { name: 'ga:eventCategory' }, { name: 'ga:eventAction' }],
-                        filtersExpression: 'ga:eventCategory==link_click',  // Replace with your event category
+                dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+                metrics: [{ name: 'eventCount' }], // Number of events (link clicks)
+                dimensions: [{ name: 'eventName' }, { name: 'pagePath' }], // Event name and URL (pagePath)
+                dimensionFilter: {
+                    filter: {
+                        fieldName: 'eventName',
+                        stringFilter: {
+                            matchType: 'EXACT',
+                            value: 'link_click', // Replace with your custom event name
+                        },
                     },
-                ],
+                },
             },
         });
 
         // Send the stats back as JSON
-        res.status(200).json(response.data);
+        res.status(200).json(response);
     } catch (error) {
-        res.status(500).json({ success: false, message: error });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
