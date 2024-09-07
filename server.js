@@ -23,7 +23,7 @@ const clickSchema = new mongoose.Schema({
 const Click = mongoose.model('Click', clickSchema);
 
 // Google Analytics scopes
-const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
+const scopes = 'https://www.googleapis.com/auth/analytics.readonly';
 
 const jwt = new google.auth.JWT({
   email: process.env.CLIENT_EMAIL,
