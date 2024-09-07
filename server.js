@@ -7,12 +7,12 @@ require("dotenv").config();
 // Google Analytics scopes
 const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
 
-const jwt = new google.auth.JWT(
-    process.env.CLIENT_EMAIL,
-    null,
-    process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
-    scopes
-);
+const jwt = new google.auth.JWT({
+  email: process.env.CLIENT_EMAIL,
+  key: Buffer.from(process.env.PRIVATE_KEY, 'base64').toString('utf8'),
+  scopes: scopes
+});
+
 
 // console.log(process.env.PRIVATE_KEY.replace(/\\n/g, "\n") , "AAAAAAAAAAAA")
 
