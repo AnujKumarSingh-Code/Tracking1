@@ -75,15 +75,14 @@ app.get('/oauth2callback', async (req, res) => {
 // API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
     try {
-        // Ensure that the OAuth2 client has been authorized
+        // Authorize the client
         if (!oauth2Client.credentials.access_token) {
-            return res.status(401).json({ success: false, message: 'No access token available. Please authorize the application first.' });
+            return res.status(401).json({ success: false, message: 'No access token available.' });
         }
 
         // Initialize the GA4 Data API client with the OAuth2 client
         const analyticsData = google.analyticsdata('v1beta');
-
-        const [response] = await analyticsData.properties.runReport({
+        const response = await analyticsData.properties.runReport({
             property: `properties/${process.env.VIEW_ID}`,
             requestBody: {
                 dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -102,13 +101,19 @@ app.get('/get-link-stats', async (req, res) => {
             auth: oauth2Client,
         });
 
+        // Check if response data is iterable
+        if (!response || !Array.isArray(response.rows)) {
+            throw new Error('Unexpected response format.');
+        }
+
         // Send the stats back as JSON
         res.status(200).json(response.data);
     } catch (error) {
-        console.error('Error fetching link stats:', error);
+        console.error('Error during API request:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 
 // Serve the HTML page
 app.get('/', (req, res) => {
