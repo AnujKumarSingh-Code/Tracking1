@@ -25,11 +25,12 @@ const Click = mongoose.model('Click', clickSchema);
 // Google Analytics scopes
 const scopes = 'https://www.googleapis.com/auth/analytics.readonly';
 
-const jwt = new google.auth.JWT({
-  email: process.env.CLIENT_EMAIL,
-  key: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),  // Correctly format the private key
-  scopes: scopes
-});
+const jwt = new google.auth.JWT(
+  process.env.CLIENT_EMAIL,
+  null,
+  process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
+  scopes
+);
 
 // API route to receive link click data and store in MongoDB
 app.post('/track-click', async (req, res) => {
