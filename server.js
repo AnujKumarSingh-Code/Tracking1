@@ -11,9 +11,6 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.REDIRECT_URI
 );
 
-// Scopes for Google Analytics
-const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
-
 // Initialize Express app
 const app = express();
 
@@ -33,6 +30,56 @@ const clickSchema = new mongoose.Schema({
 
 const Click = mongoose.model('Click', clickSchema);
 
+// Function to check if access token is available
+const isAuthenticated = () => !!oauth2Client.credentials.access_token;
+
+// Function to start OAuth 2.0 flow
+const initiateOAuthFlow = (res) => {
+    const authUrl = oauth2Client.generateAuthUrl({
+        access_type: 'offline', // Request refresh token
+        scope: ['https://www.googleapis.com/auth/analytics.readonly'], // Google Analytics Read-Only scope
+    });
+    res.redirect(authUrl);
+};
+
+// Function to handle OAuth callback and store tokens
+app.get('/oauth2callback', async (req, res) => {
+    const code = req.query.code;
+    try {
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
+
+        // Store the tokens securely (e.g., in a database)
+        console.log('Tokens:', tokens);
+
+        res.send('Authorization successful! You can close this window.');
+    } catch (error) {
+        console.error('Error getting tokens:', error);
+        res.status(500).send('Error during authentication.');
+    }
+});
+
+// Middleware to ensure the user is authenticated before accessing protected routes
+app.use(async (req, res, next) => {
+    if (!isAuthenticated()) {
+        return initiateOAuthFlow(res);
+    }
+
+    // If access token is expired, refresh it
+    if (oauth2Client.credentials.expiry_date <= Date.now()) {
+        try {
+            const tokens = await oauth2Client.refreshAccessToken();
+            oauth2Client.setCredentials(tokens.credentials);
+            console.log('Token refreshed successfully:', tokens);
+        } catch (error) {
+            console.error('Error refreshing access token:', error);
+            return initiateOAuthFlow(res); // Restart OAuth flow if refreshing fails
+        }
+    }
+    
+    next();
+});
+
 // API route to receive link click data and store in MongoDB
 app.post('/track-click', async (req, res) => {
     const { ownerId, linkUrl } = req.body;
@@ -45,41 +92,9 @@ app.post('/track-click', async (req, res) => {
     }
 });
 
-// Route to initiate OAuth2 flow
-app.get('/auth', (req, res) => {
-    const authUrl = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: scopes,
-    });
-    res.redirect(authUrl);
-});
-
-// OAuth2 callback route to handle authorization code
-app.get('/oauth2callback', async (req, res) => {
-    const code = req.query.code;
-
-    try {
-        const { tokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
-        
-        // Save the tokens for future use
-        console.log('Tokens:', tokens);
-
-        res.send('Authorization successful! You can close this window.');
-    } catch (error) {
-        console.error('Error getting tokens:', error);
-        res.status(500).send('Error during authentication.');
-    }
-});
-
 // API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
     try {
-        // Authorize the client
-        if (!oauth2Client.credentials.access_token) {
-            return res.status(401).json({ success: false, message: 'No access token available.' });
-        }
-
         // Initialize the GA4 Data API client with the OAuth2 client
         const analyticsData = google.analyticsdata('v1beta');
         const response = await analyticsData.properties.runReport({
@@ -101,11 +116,6 @@ app.get('/get-link-stats', async (req, res) => {
             auth: oauth2Client,
         });
 
-        // Check if response data is iterable
-        if (!response || !Array.isArray(response.rows)) {
-            throw new Error('Unexpected response format.');
-        }
-
         // Send the stats back as JSON
         res.status(200).json(response.data);
     } catch (error) {
@@ -113,7 +123,6 @@ app.get('/get-link-stats', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
 
 // Serve the HTML page
 app.get('/', (req, res) => {
