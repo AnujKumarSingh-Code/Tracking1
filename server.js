@@ -4,19 +4,15 @@ const path = require('path');
 const { google } = require('googleapis');
 require("dotenv").config();
 
-// Google Analytics scopes
-const scopes = 'https://www.googleapis.com/auth/analytics.readonly';
-
-// Replace escaped newlines in the private key
-const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
-
-// Google Analytics JWT for authentication
-const jwt = new google.auth.JWT(
-    process.env.CLIENT_EMAIL,
-    null,
-    privateKey,
-    scopes
+// Initialize OAuth2 client
+const oauth2Client = new google.auth.OAuth2(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    process.env.REDIRECT_URI
 );
+
+// Google Analytics Data API client
+const analyticsData = google.analyticsdata('v1beta');
 
 // Initialize Express app
 const app = express();
@@ -51,41 +47,31 @@ app.post('/track-click', async (req, res) => {
 
 // API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
-
-    
     try {
-        // Authorize the client
-        await jwt.authorize();
-
-        // Initialize the GA4 Data API client
-        const analyticsData = google.analyticsdata('v1beta');
-
-        // GA4 Property ID (replace with your property ID)
-        const propertyId = process.env.VIEW_ID;
-
-        // Define the request parameters for GA4 Data API
+        // Initialize the GA4 Data API client with the OAuth2 client
         const [response] = await analyticsData.properties.runReport({
-            property: `properties/${propertyId}`,
+            property: `properties/${process.env.VIEW_ID}`,
             requestBody: {
                 dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-                metrics: [{ name: 'eventCount' }], // Number of events (link clicks)
-                dimensions: [{ name: 'eventName' }, { name: 'pagePath' }], // Event name and URL (pagePath)
+                metrics: [{ name: 'eventCount' }],
+                dimensions: [{ name: 'eventName' }, { name: 'pagePath' }],
                 dimensionFilter: {
                     filter: {
                         fieldName: 'eventName',
                         stringFilter: {
                             matchType: 'EXACT',
-                            value: 'link_click', // Replace with your custom event name
+                            value: 'link_click',
                         },
                     },
                 },
             },
+            auth: oauth2Client,
         });
 
         // Send the stats back as JSON
         res.status(200).json(response);
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
