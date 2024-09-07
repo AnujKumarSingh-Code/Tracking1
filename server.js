@@ -43,7 +43,7 @@ app.get('/oauth2callback', async (req, res) => {
         
         // Save the tokens for future use
         tokens = receivedTokens;
-        console.log('Tokens:', tokens);
+        console.log('Tokens received:', tokens);
 
         res.send('Authorization successful! Tokens acquired, you can now use the application.');
     } catch (error) {
@@ -51,6 +51,7 @@ app.get('/oauth2callback', async (req, res) => {
         res.status(500).send('Error during authentication.');
     }
 });
+
 
 // Middleware to ensure tokens are set before making requests
 app.use((req, res, next) => {
