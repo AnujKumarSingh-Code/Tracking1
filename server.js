@@ -4,19 +4,24 @@ const path = require('path');
 const { google } = require('googleapis');
 require('dotenv').config();
 
+// Initialize OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
   process.env.CLIENT_ID,
   process.env.CLIENT_SECRET,
   process.env.REDIRECT_URI
 );
 
+// Simulated persistent token storage (use a database in production)
 let tokenStore = null;
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// MongoDB schema for storing click data (for future use)
+// Connect to MongoDB
+mongoose.connect('mongodb+srv://anujkumarsinghcoder:QgSvKNYjniJWzg0F@project-anal.amlt0ce.mongodb.net/?retryWrites=true&w=majority&appName=project-anal');
+
+// MongoDB Schema for tracking clicks
 const clickSchema = new mongoose.Schema({
   ownerId: String,
   linkUrl: String,
@@ -25,7 +30,47 @@ const clickSchema = new mongoose.Schema({
 
 const Click = mongoose.model('Click', clickSchema);
 
-// Route to initiate OAuth2 authentication
+// Route to track clicks
+app.post('/track-click', async (req, res) => {
+  const { ownerId, linkUrl } = req.body;
+
+  try {
+    const newClick = new Click({
+      ownerId,
+      linkUrl,
+    });
+
+    await newClick.save();
+    res.status(200).json({ success: true, message: 'Click tracked successfully' });
+  } catch (error) {
+    console.error('Error tracking click:', error);
+    res.status(500).json({ success: false, message: 'Failed to track click.' });
+  }
+});
+
+// Route to fetch click stats for each user
+app.get('/get-click-stats/:ownerId', async (req, res) => {
+  const ownerId = req.params.ownerId;
+
+  try {
+    const clicks = await Click.aggregate([
+      { $match: { ownerId } },
+      {
+        $group: {
+          _id: '$linkUrl',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json(clicks);
+  } catch (error) {
+    console.error('Error fetching click stats:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch click stats.' });
+  }
+});
+
+// OAuth2 flow
 app.get('/auth', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
@@ -34,16 +79,14 @@ app.get('/auth', (req, res) => {
   res.redirect(authUrl);
 });
 
-// Callback route to handle OAuth2 authentication
+// OAuth2 callback
 app.get('/oauth2callback', async (req, res) => {
   const code = req.query.code;
   
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
-
-    tokenStore = tokens; // Store tokens
-    console.log('Tokens acquired and stored:', tokenStore);
+    tokenStore = tokens; // Store tokens in persistent storage (for production use)
 
     res.send('Authorization successful! You can close this window.');
   } catch (error) {
@@ -52,18 +95,19 @@ app.get('/oauth2callback', async (req, res) => {
   }
 });
 
-// Middleware to check and refresh the token if necessary
+// Middleware to check and refresh token
 async function ensureAuthenticated(req, res, next) {
   if (!tokenStore || !tokenStore.access_token) {
-    console.log('No access token available.');
     return res.status(401).json({ success: false, message: 'No access token available. Please authorize the app.' });
   }
 
   oauth2Client.setCredentials(tokenStore);
 
   try {
-    await oauth2Client.getAccessToken();
-    tokenStore = oauth2Client.credentials; // Update tokens after refresh
+    if (oauth2Client.isTokenExpiring()) {
+      const { credentials } = await oauth2Client.refreshAccessToken();
+      tokenStore = credentials; // Update tokenStore with refreshed tokens
+    }
     next();
   } catch (error) {
     console.error('Error refreshing access token:', error);
@@ -71,16 +115,17 @@ async function ensureAuthenticated(req, res, next) {
   }
 }
 
-// Route to fetch link click stats from Google Analytics
+// Example protected route to get Google Analytics data
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
-    const response = await analyticsData.properties.runReport({
+
+    const [response] = await analyticsData.properties.runReport({
       property: `properties/${process.env.VIEW_ID}`,
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
         metrics: [{ name: 'eventCount' }],
-        dimensions: [{ name: 'customEvent:owner_id' }, { name: 'pagePath' }],
+        dimensions: [{ name: 'eventName' }, { name: 'pagePath' }],
         dimensionFilter: {
           filter: {
             fieldName: 'eventName',
@@ -94,28 +139,11 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
       auth: oauth2Client,
     });
 
-    // Process the response to group by owner_id and link_url
-    const data = {};
-    response.data.rows.forEach(row => {
-      const [owner_id, link_url] = row.dimensionValues.map(d => d.value);
-      const eventCount = row.metricValues[0].value;
-
-      if (!data[owner_id]) {
-        data[owner_id] = {};
-      }
-      data[owner_id][link_url] = (data[owner_id][link_url] || 0) + parseInt(eventCount);
-    });
-
-    res.status(200).json(data);
+    res.status(200).json(response.data);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ success: false, message: error.message });
   }
-});
-
-// Route to serve the frontend
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start the server
