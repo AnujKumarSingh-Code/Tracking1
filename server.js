@@ -30,50 +30,49 @@ const clickSchema = new mongoose.Schema({
 
 const Click = mongoose.model('Click', clickSchema);
 
-// Store tokens in memory (or use a database for persistence)
-let tokens = null;
+let tokens = null; // To hold tokens in memory for simplicity
 
-// Automatically handle OAuth2 callback and retrieve tokens
 app.get('/oauth2callback', async (req, res) => {
     const code = req.query.code;
 
     try {
-        const { tokens: receivedTokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(receivedTokens);
+        const { tokens: newTokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(newTokens);
         
-        // Save the tokens for future use
-        tokens = receivedTokens;
-        console.log('Tokens received:', tokens);
+        // Save tokens
+        tokens = newTokens; // You should ideally save this to a database
 
-        res.send('Authorization successful! Tokens acquired, you can now use the application.');
+        res.send('Authorization successful! You can close this window.');
     } catch (error) {
         console.error('Error getting tokens:', error);
         res.status(500).send('Error during authentication.');
     }
 });
 
-
-// Middleware to ensure tokens are set before making requests
-app.use((req, res, next) => {
-    if (tokens) {
-        oauth2Client.setCredentials(tokens);
+// Middleware to check and refresh the token if necessary
+async function ensureAuthenticated(req, res, next) {
+    if (!tokens || !tokens.access_token) {
+        return res.status(401).json({ success: false, message: 'No access token available. Please authorize the app.' });
     }
-    next();
-});
 
-// API route to get link stats from Google Analytics Data API (GA4)
-app.get('/get-link-stats', async (req, res) => {
-    try {
-        // Ensure the client is authorized with valid tokens
-        if (!tokens || !tokens.access_token) {
-            return res.status(401).json({ success: false, message: 'No access token available. Please authorize the app.' });
+    oauth2Client.setCredentials(tokens);
+
+    if (oauth2Client.isTokenExpiring()) {
+        try {
+            const newTokens = await oauth2Client.refreshAccessToken();
+            tokens = newTokens.credentials;
+        } catch (error) {
+            return res.status(500).json({ success: false, message: 'Failed to refresh access token.' });
         }
+    }
 
-        // Initialize the GA4 Data API client with the OAuth2 client
-        const analyticsData = google.analyticsdata('v1beta');
+    next();
+}
 
-        // Make the API request
-        const [response] = await analyticsData.properties.runReport({
+// Use this middleware in any route that requires authentication
+app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
+    try {
+        const [response] = await google.analyticsdata('v1beta').properties.runReport({
             property: `properties/${process.env.VIEW_ID}`,
             requestBody: {
                 dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -92,13 +91,12 @@ app.get('/get-link-stats', async (req, res) => {
             auth: oauth2Client,
         });
 
-        // Send the stats back as JSON
         res.status(200).json(response);
     } catch (error) {
-        console.error('Error fetching link stats:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 
 // Serve the HTML page
 app.get('/', (req, res) => {
