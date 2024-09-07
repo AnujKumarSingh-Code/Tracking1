@@ -4,11 +4,6 @@ const path = require('path');
 const { google } = require('googleapis');
 require("dotenv").config();
 
-
-
-
-// console.log(process.env.PRIVATE_KEY.replace(/\\n/g, "\n") , "AAAAAAAAAAAA")
-
 // Initialize Express app
 const app = express();
 
@@ -32,7 +27,7 @@ const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
 
 const jwt = new google.auth.JWT({
   email: process.env.CLIENT_EMAIL,
-  key: Buffer.from(process.env.PRIVATE_KEY, 'base64').toString('utf8'),
+  key: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),  // Correctly format the private key
   scopes: scopes
 });
 
