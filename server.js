@@ -27,6 +27,15 @@ const clickSchema = new mongoose.Schema({
 
 const Click = mongoose.model('Click', clickSchema);
 
+// Route to start OAuth2 flow
+app.get('/auth', (req, res) => {
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/analytics.readonly'],
+  });
+  res.redirect(authUrl);
+});
+
 // OAuth2 callback route to handle authorization code
 app.get('/oauth2callback', async (req, res) => {
   const code = req.query.code;
@@ -34,8 +43,8 @@ app.get('/oauth2callback', async (req, res) => {
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
-    
-    // Store tokens (you should store them in a persistent storage)
+
+    // Store tokens (you should store them in persistent storage)
     tokenStore = tokens;
 
     res.send('Authorization successful! You can close this window.');
@@ -53,24 +62,25 @@ async function ensureAuthenticated(req, res, next) {
 
   oauth2Client.setCredentials(tokenStore);
 
-  // Check if the token is expired and refresh it
-  if (oauth2Client.isTokenExpiring()) {
-    try {
+  try {
+    // Refresh the access token if it is expired
+    if (oauth2Client.isTokenExpiring()) {
       const { credentials } = await oauth2Client.refreshAccessToken();
       tokenStore = credentials; // Update tokenStore with refreshed tokens
-    } catch (error) {
-      console.error('Error refreshing access token:', error);
-      return res.status(500).json({ success: false, message: 'Failed to refresh access token.' });
     }
+    next();
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    return res.status(500).json({ success: false, message: 'Failed to refresh access token.' });
   }
-
-  next();
 }
 
 // Example protected route to get Google Analytics data
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
-    const [response] = await google.analyticsdata('v1beta').properties.runReport({
+    const analyticsData = google.analyticsdata('v1beta');
+
+    const [response] = await analyticsData.properties.runReport({
       property: `properties/${process.env.VIEW_ID}`,
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -89,7 +99,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
       auth: oauth2Client,
     });
 
-    res.status(200).json(response);
+    res.status(200).json(response.data);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ success: false, message: error.message });
