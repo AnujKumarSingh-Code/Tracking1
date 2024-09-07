@@ -5,7 +5,7 @@ const { google } = require('googleapis');
 require("dotenv").config();
 
 // Google Analytics scopes
-const scopes = ['https://www.googleapis.com/auth/analytics.readonly'];
+const scopes = 'https://www.googleapis.com/auth/analytics.readonly';
 
 // Replace escaped newlines in the private key
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
