@@ -11,9 +11,6 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.REDIRECT_URI
 );
 
-// Google Analytics Data API client
-const analyticsData = google.analyticsdata('v1beta');
-
 // Initialize Express app
 const app = express();
 
@@ -48,8 +45,13 @@ app.post('/track-click', async (req, res) => {
 // API route to get link stats from Google Analytics Data API (GA4)
 app.get('/get-link-stats', async (req, res) => {
     try {
+        // Authorize the client
+        if (!oauth2Client.credentials.access_token) {
+            return res.status(401).json({ success: false, message: 'No access token available.' });
+        }
+
         // Initialize the GA4 Data API client with the OAuth2 client
-        const [response] = await analyticsData.properties.runReport({
+        const [response] = await google.analyticsdata('v1beta').properties.runReport({
             property: `properties/${process.env.VIEW_ID}`,
             requestBody: {
                 dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -78,6 +80,24 @@ app.get('/get-link-stats', async (req, res) => {
 // Serve the HTML page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+// OAuth2 callback route to handle authorization code
+app.get('/oauth2callback', async (req, res) => {
+    const code = req.query.code;
+
+    try {
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
+        
+        // Save the tokens for future use
+        console.log('Tokens:', tokens);
+
+        res.send('Authorization successful! You can close this window.');
+    } catch (error) {
+        console.error('Error getting tokens:', error);
+        res.status(500).send('Error during authentication.');
+    }
 });
 
 // Start the server
