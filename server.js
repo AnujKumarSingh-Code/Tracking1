@@ -4,7 +4,7 @@ const path = require('path');
 const { google } = require('googleapis');
 require('dotenv').config();
 
-// Initialize OAuth2 client
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.CLIENT_ID,
   process.env.CLIENT_SECRET,
