@@ -120,35 +120,37 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
-   const response = await analyticsData.properties.runReport({
+  const analyticsData = google.analyticsdata('v1beta');
+
+const response = await analyticsData.properties.runReport({
   property: `properties/${process.env.VIEW_ID}`,
   requestBody: {
     dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
     metrics: [{ name: 'eventCount' }],
     dimensions: [
       { name: 'eventName' },
-      { name: 'customEvent:owner_id' } // Adding owner_id as a dimension
+      { name: 'customEvent:owner_id' } // Ensure 'owner_id' is tracked properly in GA
     ],
     dimensionFilter: {
       andGroup: {
-        filters: [
+        expressions: [
           {
             filter: {
               fieldName: 'eventName',
               stringFilter: {
                 matchType: 'EXACT',
                 value: 'link_click',
-              },
-            },
+              }
+            }
           },
           {
             filter: {
-              fieldName: 'customEvent:owner_id',
+              fieldName: 'customEvent:owner_id', // Use your custom event name for owner_id
               stringFilter: {
                 matchType: 'EXACT',
-                value: '123', // Specify the owner_id you want to filter by
-              },
-            },
+                value: '123' // Replace with specific owner_id value
+              }
+            }
           }
         ]
       }
@@ -156,6 +158,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   },
   auth: oauth2Client,
 });
+
 
    res.status(200).json(response.data);
 
