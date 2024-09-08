@@ -79,6 +79,8 @@
                     const ownerId = this.getAttribute('data-page-owner-id');
                     const linkUrl = this.getAttribute('href');
 
+                    console.log(`Owner ID: ${ownerId}, Link URL: ${linkUrl}`);
+
                     // Send data to the backend (Express server)
                     fetch('/track-click', {
                         method: 'POST',
