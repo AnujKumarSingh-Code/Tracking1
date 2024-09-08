@@ -120,38 +120,44 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
-    const response = await analyticsData.properties.runReport({
-      property: `properties/${process.env.VIEW_ID}`,
-      requestBody: {
-        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-        metrics: [{ name: 'eventCount' }],
-        dimensions: [{ name: 'eventName' }, { name: 'pagePath' }],
-        dimensionFilter: {
-          filter: {
-            fieldName: 'eventName',
-            stringFilter: {
-              matchType: 'EXACT',
-              value: 'link_click',
+   const response = await analyticsData.properties.runReport({
+  property: `properties/${process.env.VIEW_ID}`,
+  requestBody: {
+    dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+    metrics: [{ name: 'eventCount' }],
+    dimensions: [
+      { name: 'eventName' },
+      { name: 'customEvent:owner_id' } // Adding owner_id as a dimension
+    ],
+    dimensionFilter: {
+      andGroup: {
+        filters: [
+          {
+            filter: {
+              fieldName: 'eventName',
+              stringFilter: {
+                matchType: 'EXACT',
+                value: 'link_click',
+              },
             },
           },
-        },
-      },
-      auth: oauth2Client,
-    });
+          {
+            filter: {
+              fieldName: 'customEvent:owner_id',
+              stringFilter: {
+                matchType: 'EXACT',
+                value: '123', // Specify the owner_id you want to filter by
+              },
+            },
+          }
+        ]
+      }
+    }
+  },
+  auth: oauth2Client,
+});
 
-    // Extracting the relevant data from the response
-    const data = response.data.rows.map(row => ({
-      eventName: row.dimensionValues[0].value,
-      pagePath: row.dimensionValues[1].value,
-      eventCount: row.metricValues[0].value,
-    }));
-
-    // Send the extracted data back to the client
-    res.status(200).json({
-      success: true,
-      message: 'Data fetched successfully',
-      data: data
-    });
+   res.status(200).json(response.data);
 
   } catch (error) {
     console.error('Error fetching data:', error);
