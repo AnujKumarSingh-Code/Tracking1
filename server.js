@@ -120,7 +120,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
-  const analyticsData = google.analyticsdata('v1beta');
+ 
 
 const response = await analyticsData.properties.runReport({
   property: `properties/${process.env.VIEW_ID}`,
