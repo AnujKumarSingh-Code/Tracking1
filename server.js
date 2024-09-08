@@ -139,12 +139,26 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
       auth: oauth2Client,
     });
 
-    res.status(200).json(response);
+    // Extracting the relevant data from the response
+    const data = response.data.rows.map(row => ({
+      eventName: row.dimensionValues[0].value,
+      pagePath: row.dimensionValues[1].value,
+      eventCount: row.metricValues[0].value,
+    }));
+
+    // Send the extracted data back to the client
+    res.status(200).json({
+      success: true,
+      message: 'Data fetched successfully',
+      data: data
+    });
+
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 // Start the server
 app.listen(4000, () => {
