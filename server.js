@@ -120,7 +120,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
-    const [response] = await analyticsData.properties.runReport({
+    const response = await analyticsData.properties.runReport({
       property: `properties/${process.env.VIEW_ID}`,
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
@@ -139,7 +139,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
       auth: oauth2Client,
     });
 
-    res.status(200).json(response.data);
+    res.status(200).json(response);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ success: false, message: error.message });
