@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const { google } = require('googleapis');
-const open = require('open');  // Add this package to open URLs in the browser
+const open = require('open');  
 require('dotenv').config();
 
 const oauth2Client = new google.auth.OAuth2(
