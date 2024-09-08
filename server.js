@@ -11,7 +11,7 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.REDIRECT_URI
 );
 
-// Simulated persistent token storage (use a database in production)
+
 let tokenStore = null;
 
 const app = express();
