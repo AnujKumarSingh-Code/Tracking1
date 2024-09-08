@@ -116,57 +116,67 @@ async function ensureAuthenticated(req, res, next) {
 }
 
 // Example protected route to get Google Analytics data
+// Example protected route to get Google Analytics data with link_url filter
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
+  const { ownerId, linkUrl } = req.query;  // Get ownerId and linkUrl from query parameters
+
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
- 
-
-const response = await analyticsData.properties.runReport({
-  property: `properties/${process.env.VIEW_ID}`,
-  requestBody: {
-    dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-    metrics: [{ name: 'eventCount' }],
-    dimensions: [
-      { name: 'eventName' },
-      { name: 'customEvent:owner_id' } // Ensure 'owner_id' is tracked properly in GA
-    ],
-    dimensionFilter: {
-      andGroup: {
-        expressions: [
-          {
-            filter: {
-              fieldName: 'eventName',
-              stringFilter: {
-                matchType: 'EXACT',
-                value: 'link_click',
-              }
-            }
+    const response = await analyticsData.properties.runReport({
+      property: `properties/${process.env.VIEW_ID}`,
+      requestBody: {
+        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensions: [
+          { name: 'eventName' },
+          { name: 'customEvent:owner_id' }, // Ensure 'owner_id' is tracked properly in GA
+          { name: 'customEvent:link_url' }  // Ensure 'link_url' is tracked properly in GA
+        ],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  stringFilter: {
+                    matchType: 'EXACT',
+                    value: 'link_click',
+                  },
+                },
+              },
+              {
+                filter: {
+                  fieldName: 'customEvent:owner_id', // Use your custom event name for owner_id
+                  stringFilter: {
+                    matchType: 'EXACT',
+                    value: ownerId || '123', // Replace with specific owner_id value from query param or default
+                  },
+                },
+              },
+              {
+                filter: {
+                  fieldName: 'customEvent:link_url', // Use your custom event name for link_url
+                  stringFilter: {
+                    matchType: 'EXACT',
+                    value: linkUrl || 'your_default_url', // Replace with specific link_url from query param or default
+                  },
+                },
+              },
+            ],
           },
-          {
-            filter: {
-              fieldName: 'customEvent:owner_id', // Use your custom event name for owner_id
-              stringFilter: {
-                matchType: 'EXACT',
-                value: '123' // Replace with specific owner_id value
-              }
-            }
-          }
-        ]
-      }
-    }
-  },
-  auth: oauth2Client,
-});
+        },
+      },
+      auth: oauth2Client,
+    });
 
-
-   res.status(200).json(response.data);
-
+    res.status(200).json(response.data);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 
 // Start the server
