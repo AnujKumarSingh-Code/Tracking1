@@ -115,12 +115,11 @@ async function ensureAuthenticated(req, res, next) {
   }
 }
 
-// Example protected route to get Google Analytics data
-// Example protected route to get Google Analytics data with link_url filter
-app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
-  const { ownerId, linkUrl } = req.query;  // Extract ownerId and linkUrl from query parameters
 
-  if (!ownerId || !linkUrl) {
+app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
+  const { ownerId} = req.query;  
+
+  if (!ownerId) {
     return res.status(400).json({ success: false, message: 'ownerId and linkUrl are required.' });
   }
 
@@ -129,14 +128,14 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
 
     // Make the API request to GA4
     const response = await analyticsData.properties.runReport({
-      property: `properties/${process.env.VIEW_ID}`, // Replace VIEW_ID with your GA4 property ID
+      property: `properties/${process.env.VIEW_ID}`, 
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-        metrics: [{ name: 'eventCount' }], // Metric for counting events
+        metrics: [{ name: 'eventCount' }], 
         dimensions: [
-          { name: 'eventName' }, // Track the event name (e.g., link clicks)
-          { name: 'customEvent:owner_id' }, // Custom dimension for the owner_id
-          { name: 'customEvent:link_url' }  // Custom dimension for the link_url
+          { name: 'eventName' }, 
+          { name: 'customEvent:owner_id' }, 
+          { name: 'customEvent:link_url' }  
         ],
         dimensionFilter: {
           andGroup: {
@@ -146,28 +145,19 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
                   fieldName: 'eventName',
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: 'link_click', // Assuming 'link_click' is the event name for link clicks
+                    value: 'link_click', 
                   },
                 },
               },
               {
                 filter: {
-                  fieldName: 'customEvent:owner_id', // Filter by owner_id
+                  fieldName: 'customEvent:owner_id', 
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: ownerId,  // Use the ownerId from query parameters
+                    value: ownerId,  
                   },
                 },
-              },
-              {
-                filter: {
-                  fieldName: 'customEvent:link_url', // Filter by link_url
-                  stringFilter: {
-                    matchType: 'EXACT',
-                    value: linkUrl,  // Use the linkUrl from query parameters
-                  },
-                },
-              },
+              }
             ],
           },
         },
