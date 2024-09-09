@@ -117,11 +117,8 @@ async function ensureAuthenticated(req, res, next) {
 
 
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
-  const { ownerId} = req.query;  
-
-  if (!ownerId) {
-    return res.status(400).json({ success: false, message: 'ownerId and linkUrl are required.' });
-  }
+  
+ 
 
   try {
     const analyticsData = google.analyticsdata('v1beta');
