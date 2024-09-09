@@ -118,20 +118,25 @@ async function ensureAuthenticated(req, res, next) {
 // Example protected route to get Google Analytics data
 // Example protected route to get Google Analytics data with link_url filter
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
-  const { ownerId, linkUrl } = req.query;  // Get ownerId and linkUrl from query parameters
+  const { ownerId, linkUrl } = req.query;  // Extract ownerId and linkUrl from query parameters
+
+  if (!ownerId || !linkUrl) {
+    return res.status(400).json({ success: false, message: 'ownerId and linkUrl are required.' });
+  }
 
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
+    // Make the API request to GA4
     const response = await analyticsData.properties.runReport({
-      property: `properties/${process.env.VIEW_ID}`,
+      property: `properties/${process.env.VIEW_ID}`, // Replace VIEW_ID with your GA4 property ID
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
-        metrics: [{ name: 'eventCount' }],
+        metrics: [{ name: 'eventCount' }], // Metric for counting events
         dimensions: [
-          { name: 'eventName' },
-          { name: 'customEvent:owner_id' }, // Ensure 'owner_id' is tracked properly in GA
-          { name: 'customEvent:link_url' }  // Ensure 'link_url' is tracked properly in GA
+          { name: 'eventName' }, // Track the event name (e.g., link clicks)
+          { name: 'customEvent:owner_id' }, // Custom dimension for the owner_id
+          { name: 'customEvent:link_url' }  // Custom dimension for the link_url
         ],
         dimensionFilter: {
           andGroup: {
@@ -141,25 +146,25 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
                   fieldName: 'eventName',
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: 'link_click',
+                    value: 'link_click', // Assuming 'link_click' is the event name for link clicks
                   },
                 },
               },
               {
                 filter: {
-                  fieldName: 'customEvent:owner_id', // Use your custom event name for owner_id
+                  fieldName: 'customEvent:owner_id', // Filter by owner_id
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: ownerId || '123', // Replace with specific owner_id value from query param or default
+                    value: ownerId,  // Use the ownerId from query parameters
                   },
                 },
               },
               {
                 filter: {
-                  fieldName: 'customEvent:link_url', // Use your custom event name for link_url
+                  fieldName: 'customEvent:link_url', // Filter by link_url
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: linkUrl || 'your_default_url', // Replace with specific link_url from query param or default
+                    value: linkUrl,  // Use the linkUrl from query parameters
                   },
                 },
               },
@@ -167,15 +172,18 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
           },
         },
       },
-      auth: oauth2Client,
+      auth: oauth2Client,  // OAuth client authentication
     });
 
+    // Send the API response back to the client
     res.status(200).json(response.data);
+
   } catch (error) {
     console.error('Error fetching data:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Error fetching Google Analytics data.' });
   }
 });
+
 
 
 
