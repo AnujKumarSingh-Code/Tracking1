@@ -84,9 +84,11 @@
 
                     // Push data to the Data Layer for GTM
                     dataLayer.push({
-                        event: 'linkClick',
-                        owner_id: ownerId,  // Dynamically set
-                        link_url: linkUrl   // Dynamically set
+                        'event': 'linkClick',
+                        'event_category': 'Link Tracking',
+                        'event_action': 'Click',
+                        'event_label': linkUrl, // The URL of the link
+                        'owner_id': ownerId     // The owner id
                     });
 
                     // Optionally send data to the backend for custom tracking
