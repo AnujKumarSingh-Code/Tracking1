@@ -148,15 +148,6 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
                     value: 'link_click', 
                   },
                 },
-              },
-              {
-                filter: {
-                  fieldName: 'customEvent:owner_id', 
-                  stringFilter: {
-                    matchType: 'EXACT',
-                    value: ownerId,  
-                  },
-                },
               }
             ],
           },
