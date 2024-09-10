@@ -173,17 +173,23 @@ cron.schedule('* * * * *', async () => {
     // Process the data and update MongoDB for each user (ownerId) and linkUrl
 
     // console.log(response.data);
-    const rows = response.data.rows;
-    for (const row of rows) {
-      const [eventName, ownerId, linkUrl, eventCount] = row.dimensionValues.map(dim => dim.value);
+    for (const row of response.data.rows) {
+  const [eventName, ownerId, linkUrl] = row.dimensionValues.map(dim => dim.value);
+  const eventCount = parseInt(row.metricValues[0].value, 10); // Convert event count to an integer
 
-      // Find the document in MongoDB and update the click count
-      console.log(row)
-      const filter = { ownerId, linkUrl };
-      const update = { $set: { eventCount: parseInt(eventCount, 10) } }; // Update event count
+  // Ensure the eventCount is a valid number
+  if (isNaN(eventCount)) {
+    console.error(`Invalid eventCount for link ${linkUrl}: ${row.metricValues[0].value}`);
+    continue; // Skip this iteration if the eventCount is not a valid number
+  }
+  
+  // Find the document in MongoDB and update the click count
+  const filter = { ownerId, linkUrl };
+  const update = { $set: { eventCount } }; // Update event count
 
-      await Click.updateOne(filter, update, { upsert: true }); // Upsert: if not found, create it
-    }
+  await Click.updateOne(filter, update, { upsert: true }); // Upsert: if not found, create it
+}
+
 
     console.log('Google Analytics data fetched and updated in MongoDB.');
   } catch (error) {
