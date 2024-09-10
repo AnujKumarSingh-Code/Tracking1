@@ -182,7 +182,7 @@ cron.schedule('* * * * *', async () => {
       const filter = { ownerId, linkUrl };
       const update = { $set: { eventCount: parseInt(eventCount, 10) } }; // Update event count
 
-      // await Click.updateOne(filter, update, { upsert: true }); // Upsert: if not found, create it
+      await Click.updateOne(filter, update, { upsert: true }); // Upsert: if not found, create it
     }
 
     console.log('Google Analytics data fetched and updated in MongoDB.');
