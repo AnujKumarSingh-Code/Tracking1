@@ -25,19 +25,45 @@ mongoose.connect('mongodb+srv://anujkumarsinghcoder:QgSvKNYjniJWzg0F@project-ana
 const clickSchema = new mongoose.Schema({
   ownerId: String,
   linkUrl: String,
-  timestamp: { type: Date, default: Date.now },
+  screenResolution: String,
+  language: String,
+  userAgent: String,
+  platform: String,
+  timezone: String,
+  referrer: String,
+  url: String,
+  timestamp: Date,
 });
 
 const Click = mongoose.model('Click', clickSchema);
 
 // Route to track clicks
 app.post('/track-click', async (req, res) => {
-  const { ownerId, linkUrl } = req.body;
+  const {
+    ownerId,
+    linkUrl,
+    screenResolution,
+    language,
+    userAgent,
+    platform,
+    timezone,
+    referrer,
+    url,
+    timestamp,
+  } = req.body;
 
   try {
     const newClick = new Click({
       ownerId,
       linkUrl,
+      screenResolution,
+      language,
+      userAgent,
+      platform,
+      timezone,
+      referrer,
+      url,
+      timestamp,
     });
 
     await newClick.save();
