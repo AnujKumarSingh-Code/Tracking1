@@ -75,6 +75,44 @@ async function getTokensFromDB() {
   }
 }
 
+
+// Route to initiate OAuth flow and get first-time token
+app.get('/auth/google', (req, res) => {
+  const scopes = [
+    'https://www.googleapis.com/auth/analytics.readonly', // Add necessary scopes
+  ];
+  
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline', // Needed to get a refresh token
+    scope: scopes,
+  });
+
+  res.redirect(authUrl);
+});
+
+// Callback route to handle OAuth response and save the token
+app.get('/auth/google/callback', async (req, res) => {
+  const code = req.query.code;
+  
+  if (!code) {
+    return res.status(400).send('Authorization code missing.');
+  }
+
+  try {
+    // Exchange authorization code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
+
+    // Save tokens to the database
+    await saveTokensToDB(tokens);
+    res.status(200).send('Tokens saved successfully!');
+
+  } catch (error) {
+    console.error('Error getting tokens:', error);
+    res.status(500).send('Failed to authenticate with Google.');
+  }
+});
+
+
 // Cron job to refresh token, fetch data from Google Analytics, and update MongoDB
 cron.schedule('* * * * *', async () => {
   console.log('Running cron job to refresh access token and fetch Google Analytics data');
