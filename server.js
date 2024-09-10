@@ -118,7 +118,7 @@ async function ensureAuthenticated(req, res, next) {
 
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
   
- 
+ const { ownerId } = req.query;
 
   try {
     const analyticsData = google.analyticsdata('v1beta');
@@ -143,6 +143,15 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
                   stringFilter: {
                     matchType: 'EXACT',
                     value: 'link_click', 
+                  },
+                },
+              },
+              {
+                filter: {
+                  fieldName: 'customEvent:owner_id',
+                  stringFilter: {
+                    matchType: 'EXACT',
+                    value: ownerId, // Replace with the actual owner_id
                   },
                 },
               }
