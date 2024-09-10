@@ -172,17 +172,18 @@ cron.schedule('* * * * *', async () => {
 
     // Process the data and update MongoDB for each user (ownerId) and linkUrl
 
-    console.log(response.data);
-    // const rows = response.data.rows;
-    // for (const row of rows) {
-    //   const [eventName, ownerId, linkUrl, eventCount] = row.dimensionValues.map(dim => dim.value);
+    // console.log(response.data);
+    const rows = response.data.rows;
+    for (const row of rows) {
+      const [eventName, ownerId, linkUrl, eventCount] = row.dimensionValues.map(dim => dim.value);
 
-    //   // Find the document in MongoDB and update the click count
-    //   const filter = { ownerId, linkUrl };
-    //   const update = { $set: { eventCount: parseInt(eventCount, 10) } }; // Update event count
+      // Find the document in MongoDB and update the click count
+      console.log(row)
+      const filter = { ownerId, linkUrl };
+      const update = { $set: { eventCount: parseInt(eventCount, 10) } }; // Update event count
 
-    //   await Click.updateOne(filter, update, { upsert: true }); // Upsert: if not found, create it
-    // }
+      // await Click.updateOne(filter, update, { upsert: true }); // Upsert: if not found, create it
+    }
 
     console.log('Google Analytics data fetched and updated in MongoDB.');
   } catch (error) {
