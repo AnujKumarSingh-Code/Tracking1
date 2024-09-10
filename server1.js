@@ -84,12 +84,14 @@ app.get('/auth/google', (req, res) => {
   
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Needed to get a refresh token
+    prompt: 'consent',      // Forces Google to show the consent screen to get a refresh token
     scope: scopes,
   });
 
   res.redirect(authUrl);
 });
 
+// Callback route to handle OAuth response and save the token
 // Callback route to handle OAuth response and save the token
 app.get('/auth/google/callback', async (req, res) => {
   const code = req.query.code;
@@ -101,6 +103,13 @@ app.get('/auth/google/callback', async (req, res) => {
   try {
     // Exchange authorization code for tokens
     const { tokens } = await oauth2Client.getToken(code);
+
+    // Check if the refresh token is present
+    if (tokens.refresh_token) {
+      console.log('Refresh token received:', tokens.refresh_token);
+    } else {
+      console.log('No refresh token received.');
+    }
 
     // Save tokens to the database
     await saveTokensToDB(tokens);
