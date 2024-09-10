@@ -48,54 +48,37 @@
         function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
         gtag('config', 'G-BPXQTETB5C');
+
+        // Function to collect and push additional data to the dataLayer
+        function pushCustomData(ownerId, linkUrl) {
+            const cid = Math.random().toString(36).substring(2); // Generate unique client ID
+            const timestamp = Date.now();
+
+            // Push event data and additional parameters
+            dataLayer.push({
+                'event': 'link_click',
+                'event_category': 'Link Tracking',
+                'event_action': 'Click',
+                'event_label': linkUrl,
+                'owner_id': ownerId,
+                'cid': cid,
+                'uid': '6db6b8e6-b4af-4810-9911-571de99c60dd',  // Hardcoded user ID (replace with dynamic if needed)
+                'tid': 'G-F9LW8B9KVW',  // GA tracking ID
+                'timestamp': timestamp,
+                'user_tier': 'free1',
+                'active_link_domain': ['atcoder.jp', 'codeforces.com', 'github.com', 'www.linkedin.com'],
+                'user_location': 'Asia/Calcutta',
+                'device_info': {
+                    'ul': navigator.language,
+                    'sr': `${window.screen.width}x${window.screen.height}`,
+                    'userAgent': navigator.userAgent
+                }
+            });
+
+            console.log('DataLayer:', dataLayer);
+        }
     </script>
     <!-- End Google Analytics -->
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const links = document.querySelectorAll('.track-click');
-
-            // Collecting session-level information
-            const sessionData = {
-                screenResolution: `${window.screen.width}x${window.screen.height}`,
-                language: navigator.language,
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                referrer: document.referrer,
-                url: window.location.href,
-                timestamp: new Date().toISOString(),
-            };
-
-            console.log(sessionData);
-
-            links.forEach(link => {
-                link.addEventListener('click', function (event) {
-                    const ownerId = this.getAttribute('data-page-owner-id');
-                    const linkUrl = this.getAttribute('href');
-
-                    // Add additional user-specific data here
-                    const clickData = {
-                        ownerId,
-                        linkUrl,
-                        ...sessionData
-                    };
-
-                    console.log(clickData);
-
-                    // Send the data to your backend for tracking
-                    fetch('/track-click', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(clickData),
-                    }).then(response => response.json())
-                      .then(data => console.log('Click tracked:', data));
-                });
-            });
-        });
-    </script>
 </head>
 
 <body>
@@ -118,6 +101,35 @@
         <li><a href="https://www.codechef.com/users/anuj_kumar26" data-page-owner-id="pratham" class="track-click">CodeChef</a></li>
         <li><a href="https://www.linkedin.com/in/anuj-kumar-1790a9198/" data-page-owner-id="adesh" class="track-click">LinkedIn</a></li>
     </ul>
+
+    <!-- Click Tracking JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('.track-click');
+
+            links.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    const ownerId = this.getAttribute('data-page-owner-id');
+                    const linkUrl = this.getAttribute('href');
+
+                    // Push the event data
+                    pushCustomData(ownerId, linkUrl);
+
+                    // Optionally send data to the backend for custom tracking
+                    fetch('/track-click', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ownerId: ownerId,
+                            linkUrl: linkUrl
+                        })
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>
