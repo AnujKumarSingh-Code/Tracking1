@@ -117,15 +117,14 @@ async function ensureAuthenticated(req, res, next) {
 
 
 app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
-  
- const { ownerId } = req.query;
+  const { ownerId } = req.query;  // Get ownerId from query parameters
 
   try {
     const analyticsData = google.analyticsdata('v1beta');
 
     // Make the API request to GA4
     const response = await analyticsData.properties.runReport({
-      property: `properties/${process.env.VIEW_ID}`, 
+      property: `properties/${process.env.VIEW_ID}`,  // Use your GA4 property ID here
       requestBody: {
         dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
         metrics: [{ name: 'eventCount' }], 
@@ -142,7 +141,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
                   fieldName: 'eventName',
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: 'link_click', 
+                    value: 'link_click',  // Filter for 'link_click' event
                   },
                 },
               },
@@ -151,7 +150,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
                   fieldName: 'customEvent:owner_id',
                   stringFilter: {
                     matchType: 'EXACT',
-                    value: ownerId, // Replace with the actual owner_id
+                    value: ownerId,  // Filter by ownerId from the query
                   },
                 },
               }
@@ -170,6 +169,7 @@ app.get('/get-link-stats', ensureAuthenticated, async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching Google Analytics data.' });
   }
 });
+
 
 
 
