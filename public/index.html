@@ -49,19 +49,25 @@
         gtag('js', new Date());
         gtag('config', 'G-BPXQTETB5C');
 
-        
+        // Function to collect and push additional data to the dataLayer
         function pushCustomData(ownerId, linkUrl) {
-            const cid = Math.random().toString(36).substring(2); 
+            const cid = Math.random().toString(36).substring(2); // Generate unique client ID
             const timestamp = Date.now();
 
-            
+            // Push event data and additional parameters
             dataLayer.push({
                 'event': 'link_click',
                 'event_category': 'Link Tracking',
                 'event_action': 'Click',
                 'event_label': linkUrl,
                 'owner_id': ownerId,
+                'cid': cid,
+                'uid': '6db6b8e6-b4af-4810-9911-571de99c60dd',  // Hardcoded user ID (replace with dynamic if needed)
+                'tid': 'G-F9LW8B9KVW',  // GA tracking ID
                 'timestamp': timestamp,
+                'user_tier': 'free1',
+                'active_link_domain': ['atcoder.jp', 'codeforces.com', 'github.com', 'www.linkedin.com'],
+                'user_location': 'Asia/Calcutta',
                 'device_info': {
                     'ul': navigator.language,
                     'sr': `${window.screen.width}x${window.screen.height}`,
@@ -108,10 +114,10 @@
                     const ownerId = this.getAttribute('data-page-owner-id');
                     const linkUrl = this.getAttribute('href');
 
-                    
+                    // Push the event data
                     pushCustomData(ownerId, linkUrl);
 
-                    
+                    // Optionally send data to the backend for custom tracking
                     fetch('/track-click', {
                         method: 'POST',
                         headers: {
