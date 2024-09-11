@@ -112,10 +112,10 @@
             links.forEach(link => {
                 link.addEventListener('click', function(event) {
                     const ownerId = this.getAttribute('data-page-owner-id');
-                    const linkUrl = this.getAttribute('href');
+                    const link_url = this.getAttribute('href');
 
                     // Push the event data
-                    pushCustomData(ownerId, linkUrl);
+                    pushCustomData(ownerId, link_url);
 
                     // Optionally send data to the backend for custom tracking
                     fetch('/track-click', {
@@ -125,7 +125,7 @@
                         },
                         body: JSON.stringify({
                             ownerId: ownerId,
-                            linkUrl: linkUrl
+                            link_url: link_url
                         })
                     });
                 });
