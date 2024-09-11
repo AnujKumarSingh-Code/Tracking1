@@ -93,19 +93,7 @@
                     // Push the event data
                     pushCustomData(ownerId, linkUrl);
 
-                    // Optionally send data to the backend for custom tracking
-                    fetch('/track-click', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            ownerId: ownerId,
-                            linkUrl: linkUrl
-                        })
-                    });
-                });
-            });
+                   
         });
     </script>
 </body>
