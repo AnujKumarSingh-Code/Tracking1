@@ -21,7 +21,24 @@
     </script>
     <!-- End Google Tag Manager -->
 
-   
+    <!-- Matomo -->
+    <script>
+        var _paq = window._paq = window._paq || [];
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function() {
+            var u = "https://onrenderanuj.matomo.cloud/";
+            _paq.push(['setTrackerUrl', u + 'matomo.php']);
+            _paq.push(['setSiteId', '1']);
+            var d = document,
+                g = d.createElement('script'),
+                s = d.getElementsByTagName('script')[0];
+            g.async = true;
+            g.src = 'https://cdn.matomo.cloud/onrenderanuj.matomo.cloud/matomo.js';
+            s.parentNode.insertBefore(g, s);
+        })();
+    </script>
+    <!-- End Matomo Code -->
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BPXQTETB5C"></script>
@@ -32,18 +49,19 @@
         gtag('js', new Date());
         gtag('config', 'G-BPXQTETB5C');
 
-        // Function to collect and push additional data to the dataLayer
+        
         function pushCustomData(ownerId, linkUrl) {
-            const cid = Math.random().toString(36).substring(2); // Generate unique client ID
+            const cid = Math.random().toString(36).substring(2); 
             const timestamp = Date.now();
 
-            // Push event data and additional parameters
+            
             dataLayer.push({
                 'event': 'link_click',
                 'event_category': 'Link Tracking',
                 'event_action': 'Click',
                 'event_label': linkUrl,
                 'owner_id': ownerId,
+                'timestamp': timestamp,
                 'device_info': {
                     'ul': navigator.language,
                     'sr': `${window.screen.width}x${window.screen.height}`,
@@ -78,7 +96,6 @@
         <li><a href="https://www.linkedin.com/in/anuj-kumar-1790a9198/" data-page-owner-id="adesh" class="track-click">LinkedIn</a></li>
         <li><a href="https://www.overleaf.com/latex/templates/jakes-resume/syzfjbzwjncs" data-page-owner-id="akhilesh" class="track-click">Random</a></li>
         <li><a href="https://bio.link/anuj_kumar" data-page-owner-id="Vishal" class="track-click">Testing1</a></li>
-        <li><a href="https://app.bio.link/dashboard/stats" data-page-owner-id="Vaibhav" class="track-click">Vaibhav</a></li>
     </ul>
 
     <!-- Click Tracking JavaScript -->
@@ -91,10 +108,22 @@
                     const ownerId = this.getAttribute('data-page-owner-id');
                     const linkUrl = this.getAttribute('href');
 
-                    // Push the event data
+                    
                     pushCustomData(ownerId, linkUrl);
 
-                   
+                    
+                    fetch('/track-click', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ownerId: ownerId,
+                            linkUrl: linkUrl
+                        })
+                    });
+                });
+            });
         });
     </script>
 </body>
