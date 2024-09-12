@@ -21,24 +21,7 @@
     </script>
     <!-- End Google Tag Manager -->
 
-    <!-- Matomo -->
-    <script>
-        var _paq = window._paq = window._paq || [];
-        _paq.push(['trackPageView']);
-        _paq.push(['enableLinkTracking']);
-        (function() {
-            var u = "https://onrenderanuj.matomo.cloud/";
-            _paq.push(['setTrackerUrl', u + 'matomo.php']);
-            _paq.push(['setSiteId', '1']);
-            var d = document,
-                g = d.createElement('script'),
-                s = d.getElementsByTagName('script')[0];
-            g.async = true;
-            g.src = 'https://cdn.matomo.cloud/onrenderanuj.matomo.cloud/matomo.js';
-            s.parentNode.insertBefore(g, s);
-        })();
-    </script>
-    <!-- End Matomo Code -->
+    
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BPXQTETB5C"></script>
@@ -49,12 +32,12 @@
         gtag('js', new Date());
         gtag('config', 'G-BPXQTETB5C');
 
-        // Function to collect and push additional data to the dataLayer
+       
         function pushCustomData(ownerId, linkUrl) {
-            const cid = Math.random().toString(36).substring(2); // Generate unique client ID
+            const cid = Math.random().toString(36).substring(2); 
             const timestamp = Date.now();
 
-            // Push event data and additional parameters
+           
             dataLayer.push({
                 'event': 'link_click',
                 'event_category': 'Link Tracking',
@@ -62,12 +45,9 @@
                 'link_url': linkUrl,
                 'owner_id': ownerId,
                 'cid': cid,
-                'uid': '6db6b8e6-b4af-4810-9911-571de99c60dd',  // Hardcoded user ID (replace with dynamic if needed)
-                'tid': 'G-F9LW8B9KVW',  // GA tracking ID
+                'uid': '6db6b8e6-b4af-4810-9911-571de99c60dd',  
+                'tid': 'G-F9LW8B9KVW',  
                 'timestamp': timestamp,
-                'user_tier': 'free1',
-                'active_link_domain': ['atcoder.jp', 'codeforces.com', 'github.com', 'www.linkedin.com'],
-                'user_location': 'Asia/Calcutta',
                 'device_info': {
                     'ul': navigator.language,
                     'sr': `${window.screen.width}x${window.screen.height}`,
@@ -114,20 +94,11 @@
                     const ownerId = this.getAttribute('data-page-owner-id');
                     const link_url = this.getAttribute('href');
 
-                    // Push the event data
+                    
                     pushCustomData(ownerId, link_url);
 
-                    // Optionally send data to the backend for custom tracking
-                    fetch('/track-click', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            ownerId: ownerId,
-                            link_url: link_url
-                        })
-                    });
+                    
+                   
                 });
             });
         });
