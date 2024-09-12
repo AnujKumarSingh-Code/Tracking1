@@ -121,7 +121,7 @@ app.get('/auth/google/callback', async (req, res) => {
 
 
 
-cron.schedule('* * * * *', async () => {
+cron.schedule('0 0 * * *', async () => {
   console.log('Running cron job to refresh access token and fetch Google Analytics data');
   
   try {
